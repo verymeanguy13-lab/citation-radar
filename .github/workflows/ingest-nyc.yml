@@ -1,0 +1,22 @@
+name: Ingest NYC Violations
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # 10:00 UTC daily -- GitHub Actions cron is always UTC
+  workflow_dispatch: # lets you trigger this manually from the Actions tab
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: node scripts/ingest-nyc.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
