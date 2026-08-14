@@ -1,3 +1,4 @@
+import './globals.css'
 export const metadata = {
   title: 'CitationRadar',
   description: 'Restaurant inspection violation alerts for NYC & Toronto',

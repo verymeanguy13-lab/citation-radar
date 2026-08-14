@@ -1,0 +1,233 @@
+/* CitationRadar -- Design System
+   Clean B2B compliance-tool look: neutral base, high-contrast text,
+   restrained color used only for status and the NYC/Toronto city tag.
+   Session 2. */
+
+:root {
+  /* ---- Neutrals (base UI) ---- */
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-border: #e2e5ea;
+  --color-text-primary: #14181f;
+  --color-text-secondary: #5b6472;
+  --color-text-muted: #8a94a3;
+
+  /* ---- Brand ---- */
+  --color-brand: #1f3a5f;
+  --color-brand-hover: #16283f;
+
+  /* ---- Status (violation severity) ---- */
+  --color-critical: #b3261e;
+  --color-critical-bg: #fbe9e8;
+  --color-warning: #a15c00;
+  --color-warning-bg: #fdf1de;
+  --color-ok: #1e7d4b;
+  --color-ok-bg: #e6f5ec;
+
+  /* ---- City tags ----
+     Deliberately distinct hues (not just shade variants) so a
+     colorblind-safe distinction exists between the two cities, on top
+     of the text label every tag also carries. Never rely on color alone. */
+  --color-city-nyc: #1d5fae;       /* blue */
+  --color-city-nyc-bg: #e8f1fc;
+  --color-city-nyc-border: #b7d3f2;
+
+  --color-city-toronto: #7a2e8f;   /* purple */
+  --color-city-toronto-bg: #f4e9f8;
+  --color-city-toronto-border: #dcb9e8;
+
+  /* ---- Typography ---- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+
+  /* ---- Spacing scale ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* ---- Radius / shadow ---- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shadow-card: 0 1px 2px rgba(20, 24, 31, 0.06), 0 1px 1px rgba(20, 24, 31, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-brand);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+/* ---- Layout primitives ---- */
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+
+/* ---- Buttons ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-brand);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--color-brand-hover);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* ---- City tag ----
+   Used on every establishment/violation record and every saved-search
+   card so the active city is always visible, never inferred. Pair the
+   color with the text label -- color is a reinforcing signal, not the
+   only one. */
+
+.city-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.city-tag--nyc {
+  color: var(--color-city-nyc);
+  background: var(--color-city-nyc-bg);
+  border-color: var(--color-city-nyc-border);
+}
+
+.city-tag--toronto {
+  color: var(--color-city-toronto);
+  background: var(--color-city-toronto-bg);
+  border-color: var(--color-city-toronto-border);
+}
+
+/* Left accent bar variant -- for use on list rows/cards so the city
+   is visible even when the tag itself scrolls out of view. */
+
+.city-accent--nyc {
+  border-left: 3px solid var(--color-city-nyc);
+}
+
+.city-accent--toronto {
+  border-left: 3px solid var(--color-city-toronto);
+}
+
+/* ---- Violation severity badges ---- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge--critical {
+  color: var(--color-critical);
+  background: var(--color-critical-bg);
+}
+
+.badge--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.badge--ok {
+  color: var(--color-ok);
+  background: var(--color-ok-bg);
+}
+
+/* ---- Form elements ---- */
+
+input,
+select {
+  font-family: inherit;
+  font-size: 14px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+/* ---- Text utilities ---- */
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
