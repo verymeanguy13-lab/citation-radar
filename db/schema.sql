@@ -152,3 +152,7 @@ CREATE TABLE IF NOT EXISTS prospects (
 
 CREATE INDEX IF NOT EXISTS idx_prospects_category ON prospects(buyer_category);
 CREATE INDEX IF NOT EXISTS idx_prospects_contacted ON prospects(contacted);
+-- Migration (Session 6, dated 2026-08-15): track which ingestion_runs
+-- were one-time backfills, so monitoring's "typical volume" baseline
+-- (Section 6, check b) isn't skewed by the initial 90-day pulls.
+ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS is_initial_run BOOLEAN DEFAULT FALSE;
