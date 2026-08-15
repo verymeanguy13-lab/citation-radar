@@ -12,7 +12,7 @@
 const crypto = require('crypto');
 const { parse } = require('csv-parse/sync');
 const { Pool } = require('pg');
-const { checkIngestionHealth } = require('./lib/monitor');
+const { checkIngestionHealth, reportLoudFailure, reportSilentFailure } = require('./lib/monitor');
 
 const TORONTO_CSV_URL =
   'https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/b6b4f3fb-2e2c-47e7-931d-b87d22806948/resource/af0f5b8a-4b73-4a50-8781-65e949792b40/download/Dinesafe.csv';
@@ -179,23 +179,23 @@ async function main() {
       }
     }
 
-    const health = checkIngestionHealth({
+    const health = await checkIngestionHealth(client, {
+      cityCode: 'TOR',
       rowsFetched,
       rowsInserted,
       sampleRow: rows[0],
       expectedFields: ['estId', 'inspectionDate', 'phone'],
-      isInitialRun,
     });
 
     await client.query(
-      `INSERT INTO ingestion_runs (city_code, finished_at, status, rows_fetched, rows_inserted, median_lag_days, notes)
-       VALUES ('TOR', now(), $1, $2, $3, $4, $5)`,
-      [health.status, rowsFetched, rowsInserted, medianLagDays, health.notes]
+      `INSERT INTO ingestion_runs (city_code, finished_at, status, rows_fetched, rows_inserted, median_lag_days, notes, is_initial_run)
+       VALUES ('TOR', now(), $1, $2, $3, $4, $5, $6)`,
+      [health.status, rowsFetched, rowsInserted, medianLagDays, health.notes, isInitialRun]
     );
 
     console.log(`Run complete: ${health.status} -- ${health.notes}`);
     if (health.status === 'partial') {
-      await sendAlertEmail('CitationRadar: Toronto ingestion partial failure', health.notes);
+      await reportSilentFailure('TOR', health.notes);
     }
   } catch (err) {
     console.error('Toronto ingestion failed:', err);
@@ -204,33 +204,11 @@ async function main() {
        VALUES ('TOR', now(), 'failed', $1, $2, $3)`,
       [rowsFetched, rowsInserted, String(err.message || err)]
     );
-    await sendAlertEmail('CitationRadar: Toronto ingestion FAILED', String(err.message || err));
+    await reportLoudFailure('TOR', String(err.message || err));
     process.exitCode = 1;
   } finally {
     client.release();
     await pool.end();
-  }
-}
-
-async function sendAlertEmail(subject, body) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.ALERT_EMAIL_TO;
-  const from = process.env.ALERT_EMAIL_FROM;
-  if (!apiKey || !to || !from) {
-    console.log('Skipping alert email (RESEND_API_KEY / ALERT_EMAIL_TO / ALERT_EMAIL_FROM not set)');
-    return;
-  }
-  try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to, subject, text: body }),
-    });
-  } catch (err) {
-    console.error('Failed to send alert email:', err);
   }
 }
 

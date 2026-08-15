@@ -9,7 +9,7 @@
 
 const crypto = require('crypto');
 const { Pool } = require('pg');
-const { checkIngestionHealth } = require('./lib/monitor');
+const { checkIngestionHealth, reportLoudFailure, reportSilentFailure } = require('./lib/monitor');
 
 const NYC_DATASET_URL = 'https://data.cityofnewyork.us/resource/43nn-pn8j.json';
 const PAGE_SIZE = 1000;
@@ -190,22 +190,23 @@ async function main() {
       }
     }
 
-    const health = checkIngestionHealth({
+    const health = await checkIngestionHealth(client, {
+      cityCode: 'NYC',
       rowsFetched,
       rowsInserted,
       sampleRow: rows[0],
-      isInitialRun,
+      expectedFields: ['camis', 'inspection_date', 'record_date'],
     });
 
     await client.query(
-      `INSERT INTO ingestion_runs (city_code, finished_at, status, rows_fetched, rows_inserted, median_lag_days, notes)
-       VALUES ('NYC', now(), $1, $2, $3, $4, $5)`,
-      [health.status, rowsFetched, rowsInserted, medianLagDays, health.notes]
+      `INSERT INTO ingestion_runs (city_code, finished_at, status, rows_fetched, rows_inserted, median_lag_days, notes, is_initial_run)
+       VALUES ('NYC', now(), $1, $2, $3, $4, $5, $6)`,
+      [health.status, rowsFetched, rowsInserted, medianLagDays, health.notes, isInitialRun]
     );
 
     console.log(`Run complete: ${health.status} -- ${health.notes}`);
     if (health.status === 'partial') {
-      await sendAlertEmail('CitationRadar: NYC ingestion partial failure', health.notes);
+      await reportSilentFailure('NYC', health.notes);
     }
   } catch (err) {
     console.error('NYC ingestion failed:', err);
@@ -214,33 +215,11 @@ async function main() {
        VALUES ('NYC', now(), 'failed', $1, $2, $3)`,
       [rowsFetched, rowsInserted, String(err.message || err)]
     );
-    await sendAlertEmail('CitationRadar: NYC ingestion FAILED', String(err.message || err));
+    await reportLoudFailure('NYC', String(err.message || err));
     process.exitCode = 1;
   } finally {
     client.release();
     await pool.end();
-  }
-}
-
-async function sendAlertEmail(subject, body) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.ALERT_EMAIL_TO;
-  const from = process.env.ALERT_EMAIL_FROM;
-  if (!apiKey || !to || !from) {
-    console.log('Skipping alert email (RESEND_API_KEY / ALERT_EMAIL_TO / ALERT_EMAIL_FROM not set)');
-    return;
-  }
-  try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to, subject, text: body }),
-    });
-  } catch (err) {
-    console.error('Failed to send alert email:', err);
   }
 }
 
