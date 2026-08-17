@@ -156,3 +156,14 @@ CREATE INDEX IF NOT EXISTS idx_prospects_contacted ON prospects(contacted);
 -- were one-time backfills, so monitoring's "typical volume" baseline
 -- (Section 6, check b) isn't skewed by the initial 90-day pulls.
 ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS is_initial_run BOOLEAN DEFAULT FALSE;
+
+-- Migration (Session 8, dated 2026-08-16): email verification support.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
