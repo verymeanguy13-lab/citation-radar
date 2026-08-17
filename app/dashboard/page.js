@@ -9,6 +9,9 @@ export default async function DashboardPage({ searchParams }) {
   if (!session) {
     redirect('/login');
   }
+  if (!session.user.buyerCategory) {
+    redirect('/complete-profile');
+  }
 
   const params = await searchParams;
   const justVerified = params?.verified === '1';

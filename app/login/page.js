@@ -29,6 +29,18 @@ export default function LoginPage() {
   return (
     <div className="container" style={{ paddingTop: 'var(--space-8)', maxWidth: '380px' }}>
       <h1 style={{ fontSize: '24px', marginBottom: 'var(--space-5)' }}>Sign in</h1>
+
+      <button
+        type="button"
+        className="btn btn-secondary"
+        style={{ width: '100%', justifyContent: 'center', marginBottom: 'var(--space-4)' }}
+        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+      >
+        Sign in with Google
+      </button>
+
+      <div className="text-muted" style={{ fontSize: '12px', textAlign: 'center', marginBottom: 'var(--space-4)' }}>or</div>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         <div>
           <label className="text-secondary" style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Email</label>

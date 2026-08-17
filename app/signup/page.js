@@ -53,6 +53,18 @@ export default function SignupPage() {
   return (
     <div className="container" style={{ paddingTop: 'var(--space-8)', maxWidth: '420px' }}>
       <h1 style={{ fontSize: '24px', marginBottom: 'var(--space-5)' }}>Create your account</h1>
+
+      <button
+        type="button"
+        className="btn btn-secondary"
+        style={{ width: '100%', justifyContent: 'center', marginBottom: 'var(--space-4)' }}
+        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+      >
+        Sign up with Google
+      </button>
+
+      <div className="text-muted" style={{ fontSize: '12px', textAlign: 'center', marginBottom: 'var(--space-4)' }}>or</div>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         <div>
           <label className="text-secondary" style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Business name</label>
