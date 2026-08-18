@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
-import { pool } from '../../../../lib/db';
+import { authOptions } from '../../../../../lib/auth';
+import { pool } from '../../../../../lib/db';
 
 const VALID_CATEGORIES = ['pest', 'sanitation', 'temperature', 'other'];
 
