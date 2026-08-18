@@ -20,6 +20,7 @@ export default async function DashboardPage({ searchParams }) {
     <div className="container" style={{ paddingTop: 'var(--space-8)' }}>
       <h1 style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>Welcome, {session.user.name}</h1>
       <p className="text-secondary" style={{ marginBottom: 'var(--space-3)' }}>Signed in as {session.user.email}</p>
+      <a href="/saved-searches" className="text-muted" style={{ fontSize: '13px', display: 'inline-block', marginBottom: 'var(--space-4)' }}>Manage saved searches &rarr;</a>
 
       {justVerified ? (
         <p className="badge badge--ok" style={{ display: 'inline-block', marginBottom: 'var(--space-4)' }}>
