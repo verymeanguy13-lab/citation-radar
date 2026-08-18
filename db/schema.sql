@@ -167,3 +167,9 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Migration (Session 12, dated 2026-08-17): admin dashboard support.
+-- is_admin gates access to /admin. qa_reviewed_at lets an admin dismiss
+-- a violation from the 'other'-category QA queue once it's been looked at.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE violations ADD COLUMN IF NOT EXISTS qa_reviewed_at TIMESTAMPTZ;
