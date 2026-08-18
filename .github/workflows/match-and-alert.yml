@@ -1,0 +1,24 @@
+name: Match and Send Critical Alerts
+
+on:
+  schedule:
+    - cron: '0 11 * * *' # 11:00 UTC daily -- after both ingestion jobs (10:00 NYC, 10:30 Toronto)
+  workflow_dispatch:
+
+jobs:
+  match-and-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node scripts/run-matching.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: node scripts/run-critical-alerts.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
