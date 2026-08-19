@@ -173,3 +173,13 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
 -- a violation from the 'other'-category QA queue once it's been looked at.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 ALTER TABLE violations ADD COLUMN IF NOT EXISTS qa_reviewed_at TIMESTAMPTZ;
+
+-- Migration (Session 13, dated 2026-08-17): Paddle integration.
+-- paddle_customer_id / paddle_subscription_id link our user to Paddle's
+-- own records. paddle_subscription_status holds Paddle's raw status
+-- (active, canceled, past_due, paused) for admin visibility -- the
+-- simpler 'plan' column (free/pro) is what the app's own tier-gating
+-- logic actually checks, kept separate on purpose.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_customer_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_subscription_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_subscription_status TEXT;
