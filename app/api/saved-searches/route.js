@@ -11,6 +11,7 @@ import { pool } from '../../../lib/db';
 
 const VALID_CITIES = ['NYC', 'TOR'];
 const VALID_CATEGORIES = ['pest', 'sanitation', 'temperature', 'other'];
+const FREE_TIER_SAVED_SEARCH_LIMIT = 1; // provisional -- see Section 1.4, easy to adjust later
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -30,6 +31,16 @@ export async function POST(request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return Response.json({ error: 'Not signed in.' }, { status: 401 });
+  }
+
+  if (session.user.plan !== 'pro') {
+    const { rows } = await pool.query('SELECT COUNT(*) FROM saved_searches WHERE user_id = $1', [session.user.id]);
+    if (Number(rows[0].count) >= FREE_TIER_SAVED_SEARCH_LIMIT) {
+      return Response.json(
+        { error: `Free plan is limited to ${FREE_TIER_SAVED_SEARCH_LIMIT} saved search. Upgrade to Pro for unlimited searches and same-day critical alerts.`, upgradeRequired: true },
+        { status: 403 }
+      );
+    }
   }
 
   const body = await request.json();

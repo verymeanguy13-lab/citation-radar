@@ -22,7 +22,7 @@ export default async function SavedSearchesPage() {
       <p className="text-secondary" style={{ marginBottom: 'var(--space-5)', fontSize: '14px' }}>
         Every saved search belongs to one city. Want alerts from both NYC and Toronto? Create two.
       </p>
-      <SavedSearchesManager initialSearches={rows} />
+      <SavedSearchesManager initialSearches={rows} plan={session.user.plan} />
     </div>
   );
 }

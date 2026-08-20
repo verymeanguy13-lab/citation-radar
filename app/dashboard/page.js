@@ -20,7 +20,15 @@ export default async function DashboardPage({ searchParams }) {
     <div className="container" style={{ paddingTop: 'var(--space-8)' }}>
       <h1 style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>Welcome, {session.user.name}</h1>
       <p className="text-secondary" style={{ marginBottom: 'var(--space-3)' }}>Signed in as {session.user.email}</p>
-      <a href="/saved-searches" className="text-muted" style={{ fontSize: '13px', display: 'inline-block', marginBottom: 'var(--space-4)' }}>Manage saved searches &rarr;</a>
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+        <a href="/saved-searches" className="text-muted" style={{ fontSize: '13px' }}>Manage saved searches &rarr;</a>
+        <span className={`badge ${session.user.plan === 'pro' ? 'badge--ok' : ''}`} style={session.user.plan !== 'pro' ? { background: 'var(--color-bg)', color: 'var(--color-text-secondary)' } : {}}>
+          {session.user.plan === 'pro' ? 'Pro plan' : 'Free plan'}
+        </span>
+        {session.user.plan !== 'pro' ? (
+          <a href="/checkout" className="text-secondary" style={{ fontSize: '13px', fontWeight: 600 }}>Upgrade to Pro &rarr;</a>
+        ) : null}
+      </div>
 
       {justVerified ? (
         <p className="badge badge--ok" style={{ display: 'inline-block', marginBottom: 'var(--space-4)' }}>

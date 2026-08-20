@@ -8,18 +8,22 @@ function CityTag({ city }) {
   return <span className={`city-tag city-tag--${city === 'NYC' ? 'nyc' : 'toronto'}`}>{city}</span>;
 }
 
-function CreateForm({ onCreated }) {
+function CreateForm({ onCreated, plan, currentCount }) {
   const [cityCode, setCityCode] = useState('');
   const [label, setLabel] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [error, setError] = useState('');
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const atFreeLimit = plan !== 'pro' && currentCount >= 1;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setUpgradeRequired(false);
 
     // Defense in depth: the <select> below already makes an empty
     // submission impossible via the browser's own required validation,
@@ -46,6 +50,7 @@ function CreateForm({ onCreated }) {
 
     if (!res.ok) {
       setError(data.error || 'Something went wrong.');
+      if (data.upgradeRequired) setUpgradeRequired(true);
       return;
     }
 
@@ -64,6 +69,17 @@ function CreateForm({ onCreated }) {
     setCategoryFilter('');
     setAreaFilter('');
     setCriticalOnly(false);
+  }
+
+  if (atFreeLimit) {
+    return (
+      <div className="card" style={{ marginBottom: 'var(--space-5)', borderLeft: '3px solid var(--color-warning)' }}>
+        <p style={{ margin: '0 0 var(--space-2)', fontSize: '14px' }}>
+          You&apos;ve used your free saved search. Upgrade to Pro for unlimited saved searches and same-day critical alerts.
+        </p>
+        <a href="/checkout" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Upgrade to Pro -- $99/month</a>
+      </div>
+    );
   }
 
   return (
@@ -104,7 +120,7 @@ function CreateForm({ onCreated }) {
         Critical violations only
       </label>
 
-      {error ? <p style={{ color: 'var(--color-critical)', fontSize: '13px' }}>{error}</p> : null}
+      {error && !upgradeRequired ? <p style={{ color: 'var(--color-critical)', fontSize: '13px' }}>{error}</p> : null}
       <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Creating...' : 'Create saved search'}</button>
     </form>
   );
@@ -145,12 +161,17 @@ function SavedSearchCard({ search, onDeleted }) {
   );
 }
 
-export default function SavedSearchesManager({ initialSearches }) {
+export default function SavedSearchesManager({ initialSearches, plan }) {
   const [searches, setSearches] = useState(initialSearches);
 
   return (
     <div>
-      <CreateForm onCreated={(newSearch) => setSearches([newSearch, ...searches])} />
+      {plan !== 'pro' ? (
+        <p className="text-muted" style={{ fontSize: '13px', marginBottom: 'var(--space-3)' }}>
+          Free plan: {searches.length} of 1 saved search used.
+        </p>
+      ) : null}
+      <CreateForm onCreated={(newSearch) => setSearches([newSearch, ...searches])} plan={plan} currentCount={searches.length} />
 
       {searches.length === 0 ? (
         <p className="text-muted">No saved searches yet. Create one above to get started.</p>

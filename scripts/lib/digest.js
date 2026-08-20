@@ -71,7 +71,7 @@ async function runCriticalAlerts(client) {
      JOIN users u ON ss.user_id = u.id
      JOIN violations v ON sm.violation_id = v.id
      JOIN establishments e ON v.establishment_id = e.id
-     WHERE sm.alert_sent_at IS NULL AND v.critical_flag = TRUE`
+     WHERE sm.alert_sent_at IS NULL AND v.critical_flag = TRUE AND u.plan = 'pro'`
   );
 
   const byUser = groupByUser(rows);
