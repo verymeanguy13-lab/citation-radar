@@ -183,3 +183,19 @@ ALTER TABLE violations ADD COLUMN IF NOT EXISTS qa_reviewed_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_subscription_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS paddle_subscription_status TEXT;
+
+-- Migration (Addendum, dated 2026-08-21): anonymous search usage tracking.
+-- No PII, no user linkage, no IP address -- just enough signal (city,
+-- filters, result count, timestamp) to eventually make a data-driven
+-- call on when/whether to paywall live search, instead of guessing.
+CREATE TABLE IF NOT EXISTS search_events (
+  id SERIAL PRIMARY KEY,
+  city_code VARCHAR(3) NOT NULL REFERENCES cities(code),
+  category_filter TEXT,
+  area_filter TEXT,
+  result_count INTEGER,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_search_events_created ON search_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_search_events_city ON search_events(city_code);
