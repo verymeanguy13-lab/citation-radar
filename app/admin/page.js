@@ -21,7 +21,7 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  const [latestPerCity, recentRuns, lagTrend, qaQueue] = await Promise.all([
+  const [latestPerCity, recentRuns, lagTrend, qaQueue, searchStats, dailySearches] = await Promise.all([
     pool.query(
       `SELECT DISTINCT ON (city_code) city_code, status, rows_fetched, rows_inserted, finished_at, notes
        FROM ingestion_runs ORDER BY city_code, finished_at DESC`
@@ -43,9 +43,21 @@ export default async function AdminPage() {
        WHERE v.category = 'other' AND v.qa_reviewed_at IS NULL
        ORDER BY v.inspection_date DESC LIMIT 20`
     ),
+    pool.query(
+      `SELECT city_code, COUNT(*) AS total
+       FROM search_events WHERE created_at >= now() - interval '7 days'
+       GROUP BY city_code`
+    ),
+    pool.query(
+      `SELECT date_trunc('day', created_at)::date AS day, COUNT(*) AS total
+       FROM search_events WHERE created_at >= now() - interval '14 days'
+       GROUP BY day ORDER BY day`
+    ),
   ]);
 
   const maxLag = Math.max(...lagTrend.rows.map((r) => Number(r.median_lag_days)), 1);
+  const maxDailySearches = Math.max(...dailySearches.rows.map((r) => Number(r.total)), 1);
+  const weeklySearchTotal = searchStats.rows.reduce((sum, r) => sum + Number(r.total), 0);
 
   return (
     <div className="container" style={{ paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-8)', maxWidth: '820px' }}>
@@ -99,6 +111,34 @@ export default async function AdminPage() {
                 />
               </div>
               <span className="text-muted" style={{ fontSize: '12px', width: '48px', textAlign: 'right' }}>{Number(r.median_lag_days).toFixed(1)}d</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      <h2 style={{ fontSize: '16px', marginBottom: 'var(--space-1)' }}>Public search usage (no login required)</h2>
+      <p className="text-muted" style={{ fontSize: '13px', marginBottom: 'var(--space-3)' }}>
+        Anonymous, no PII -- tracks whether the free search is actually being used, to inform any future paywall decision.
+      </p>
+      <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+        <p style={{ fontSize: '14px', margin: '0 0 var(--space-3)' }}>
+          <strong>{weeklySearchTotal}</strong> searches in the last 7 days
+          {searchStats.rows.length > 0 ? (
+            <span className="text-muted"> ({searchStats.rows.map((r) => `${r.city_code}: ${r.total}`).join(', ')})</span>
+          ) : null}
+        </p>
+        {dailySearches.rows.length === 0 ? (
+          <p className="text-muted" style={{ margin: 0, fontSize: '13px' }}>No search activity recorded yet.</p>
+        ) : (
+          dailySearches.rows.map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: '4px' }}>
+              <span className="text-muted" style={{ width: '80px', flexShrink: 0, fontSize: '12px' }}>
+                {new Date(r.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </span>
+              <div style={{ flex: 1, background: 'var(--color-bg)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: `${(Number(r.total) / maxDailySearches) * 100}%`, background: 'var(--color-brand)', height: '12px' }} />
+              </div>
+              <span className="text-muted" style={{ fontSize: '12px', width: '30px', textAlign: 'right' }}>{r.total}</span>
             </div>
           ))
         )}

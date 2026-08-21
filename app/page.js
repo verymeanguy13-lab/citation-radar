@@ -56,6 +56,19 @@ async function getResults({ city, category, area, dateFrom, dateTo }) {
      LIMIT 50`,
     params
   );
+
+  // Fire-and-forget usage tracking -- no PII, just enough signal to make
+  // a data-driven call later on whether/when to paywall live search.
+  // Wrapped so a logging failure can never break the actual page.
+  try {
+    await pool.query(
+      `INSERT INTO search_events (city_code, category_filter, area_filter, result_count) VALUES ($1, $2, $3, $4)`,
+      [city, category || null, area || null, rows.length]
+    );
+  } catch (err) {
+    console.error('search_events logging failed (non-fatal):', err);
+  }
+
   return rows;
 }
 
