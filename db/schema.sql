@@ -199,3 +199,36 @@ CREATE TABLE IF NOT EXISTS search_events (
 
 CREATE INDEX IF NOT EXISTS idx_search_events_created ON search_events(created_at);
 CREATE INDEX IF NOT EXISTS idx_search_events_city ON search_events(city_code);
+
+-- ============================================================
+-- Migration: 2026-08-24 -- Session 15 Step 0/0b/0c findings.
+-- Added phone, email, contact_verified columns; expanded
+-- contact_method to allow 'places_api' (replaces the osm_website/
+-- domain_guess layers as the primary discovery method going
+-- forward -- both real hit rates landed too low and unreliable
+-- across validation; Google Places API + own-site email lookup
+-- replaced them). contact_verified defaults to false and should
+-- be set true only after a human has glanced at and confirmed
+-- the match -- see Section 10 log entry for why this exists.
+-- ============================================================
+
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS phone text;
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS email text;
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS contact_verified boolean NOT NULL DEFAULT false;
+
+ALTER TABLE prospects DROP CONSTRAINT IF EXISTS prospects_contact_method_check;
+ALTER TABLE prospects ADD CONSTRAINT prospects_contact_method_check
+  CHECK (contact_method IN ('osm_website','domain_guess','manual_maps','places_api','none'));
+-- ============================================================
+-- Migration: 2026-08-25 -- Session 15 continued.
+-- Added match_confidence column and expanded contact_method to
+-- allow 'tavily_search', alongside earlier 'places_api' addition.
+-- See ARCHITECTURE.md same-date entry for full context, including
+-- the Enterprise SKU billing lesson.
+-- ============================================================
+
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS match_confidence text;
+
+ALTER TABLE prospects DROP CONSTRAINT IF EXISTS prospects_contact_method_check;
+ALTER TABLE prospects ADD CONSTRAINT prospects_contact_method_check
+  CHECK (contact_method IN ('osm_website','domain_guess','manual_maps','places_api','tavily_search','none'));

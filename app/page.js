@@ -4,6 +4,12 @@
 // reinforces the city-scoping rule from Section 1 at the UI layer, on
 // top of the database trigger from Session 3. No login required: this
 // is the free top-of-funnel view.
+//
+// Addendum (2026-08-27): added TopNav -- previously there was no link
+// anywhere on this page to /login or /signup, so an anonymous visitor
+// (e.g. from cold outreach) had no way to discover the paid tier at
+// all. The upgrade path only ever existed behind login, on /dashboard
+// and /saved-searches (Session 14) -- this page was the actual gap.
 
 import { pool } from '../lib/db';
 
@@ -72,9 +78,19 @@ async function getResults({ city, category, area, dateFrom, dateTo }) {
   return rows;
 }
 
+function TopNav() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingBottom: 'var(--space-4)' }}>
+      <a href="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Sign in</a>
+      <a href="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>Get email alerts</a>
+    </div>
+  );
+}
+
 function CitySelector() {
   return (
     <div className="container" style={{ paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-8)' }}>
+      <TopNav />
       <h1 style={{ fontSize: '28px', marginBottom: 'var(--space-2)' }}>CitationRadar</h1>
       <p className="text-secondary" style={{ marginBottom: 'var(--space-6)', maxWidth: '520px' }}>
         Pick a city to search. Every result you see stays scoped to that city only -- searches never mix NYC and Toronto data.
@@ -175,6 +191,7 @@ export default async function Home({ searchParams }) {
 
   return (
     <div className="container" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-8)' }}>
+      <TopNav />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)' }}>
         <div>
           <h1 style={{ fontSize: '22px', margin: '0 0 4px' }}>CitationRadar</h1>
