@@ -1,3 +1,97 @@
+Write-Host "Fixing site coherence: navigation + save-search..." -ForegroundColor Cyan
+
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+$file1 = @'
+'use client';
+
+import { useSession } from 'next-auth/react';
+import SignOutButton from './dashboard/sign-out-button';
+
+export default function SiteNav() {
+  const { data: session, status } = useSession();
+
+  return (
+    <div
+      className="container"
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 'var(--space-3)',
+        paddingBottom: 'var(--space-3)',
+      }}
+    >
+      <a href="/" style={{ textDecoration: 'none', fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
+        CitationRadar
+      </a>
+
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        {status === 'loading' ? null : session ? (
+          <>
+            <a href="/" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Search
+            </a>
+            <a href="/dashboard" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Dashboard
+            </a>
+            <a href="/saved-searches" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Saved Searches
+            </a>
+            {session.user?.plan !== 'pro' ? (
+              <a href="/checkout" className="text-secondary" style={{ fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+                Upgrade to Pro
+              </a>
+            ) : null}
+            <SignOutButton />
+          </>
+        ) : (
+          <>
+            <a href="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+              Sign in
+            </a>
+            <a href="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              Get email alerts
+            </a>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+'@
+[System.IO.File]::WriteAllText("$PWD\app\site-nav.js", $file1, $utf8NoBom)
+Write-Host "  Wrote app\site-nav.js" -ForegroundColor Green
+
+$file2 = @'
+import './globals.css';
+import Providers from './providers';
+import SiteNav from './site-nav';
+
+export const metadata = {
+  title: 'CitationRadar',
+  description: 'Restaurant health inspection alerts for NYC and Toronto',
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          <SiteNav />
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+
+'@
+[System.IO.File]::WriteAllText("$PWD\app\layout.js", $file2, $utf8NoBom)
+Write-Host "  Wrote app\layout.js" -ForegroundColor Green
+
+$file3 = @'
 // CitationRadar -- Search & Filter UI (Session 7)
 //
 // City is the first, required choice -- not just another filter. This
@@ -204,3 +298,93 @@ export default async function Home({ searchParams }) {
     </div>
   );
 }
+
+'@
+[System.IO.File]::WriteAllText("$PWD\app\page.js", $file3, $utf8NoBom)
+Write-Host "  Wrote app\page.js" -ForegroundColor Green
+
+$file4 = @'
+'use client';
+
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+
+export default function SaveSearchButton({ city, category, area }) {
+  const { data: session, status } = useSession();
+  const [state, setState] = useState('idle'); // idle | saving | saved | limit | error
+
+  async function handleSave() {
+    const label = window.prompt('Name this saved search:', `${city} ${category || 'all categories'}${area ? ' - ' + area : ''}`);
+    if (!label) return;
+
+    setState('saving');
+    try {
+      const res = await fetch('/api/saved-searches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city_code: city,
+          label,
+          category_filter: category || null,
+          area_filter: area || null,
+        }),
+      });
+
+      if (res.status === 403) {
+        setState('limit');
+        return;
+      }
+      if (!res.ok) {
+        setState('error');
+        return;
+      }
+      setState('saved');
+    } catch {
+      setState('error');
+    }
+  }
+
+  if (state === 'saved') {
+    return <span className="badge badge--ok">Saved -- manage it on your dashboard</span>;
+  }
+  if (state === 'limit') {
+    return (
+      <span className="text-secondary" style={{ fontSize: '13px' }}>
+        Free plan allows 1 saved search. <a href="/checkout" style={{ fontWeight: 600 }}>Upgrade to Pro</a> for more.
+      </span>
+    );
+  }
+  if (state === 'error') {
+    return <span className="text-secondary" style={{ fontSize: '13px' }}>Couldn't save that -- try again in a moment.</span>;
+  }
+
+  if (status === 'loading') {
+    return null;
+  }
+
+  if (!session) {
+    return (
+      <a href="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+        Sign in to save this search
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" className="btn btn-secondary" onClick={handleSave} disabled={state === 'saving'}>
+      {state === 'saving' ? 'Saving...' : 'Save this search'}
+    </button>
+  );
+}
+
+'@
+[System.IO.File]::WriteAllText("$PWD\app\save-search-button.js", $file4, $utf8NoBom)
+Write-Host "  Wrote app\save-search-button.js" -ForegroundColor Green
+
+
+Write-Host ""
+Write-Host "All 4 files updated." -ForegroundColor Cyan
+Write-Host "Next:" -ForegroundColor Yellow
+Write-Host '  git add .'
+Write-Host '  git commit -m "Fix navigation and save-search coherence"'
+Write-Host '  git push'
