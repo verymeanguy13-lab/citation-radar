@@ -1,3 +1,106 @@
+Write-Host "Updating navigation files..." -ForegroundColor Cyan
+
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+# ============================================================
+# File 1: app/site-nav.js (NEW file)
+# ============================================================
+$siteNavContent = @'
+'use client';
+
+import { useSession } from 'next-auth/react';
+import SignOutButton from './dashboard/sign-out-button';
+
+export default function SiteNav() {
+  const { data: session, status } = useSession();
+
+  return (
+    <div
+      className="container"
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 'var(--space-3)',
+        paddingBottom: 'var(--space-3)',
+      }}
+    >
+      <a href="/" style={{ textDecoration: 'none', fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
+        CitationRadar
+      </a>
+
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        {status === 'loading' ? null : session ? (
+          <>
+            <a href="/" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Search
+            </a>
+            <a href="/dashboard" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Dashboard
+            </a>
+            <a href="/saved-searches" className="text-muted" style={{ fontSize: '13px', textDecoration: 'none' }}>
+              Saved Searches
+            </a>
+            {session.user?.plan !== 'pro' ? (
+              <a href="/checkout" className="text-secondary" style={{ fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+                Upgrade to Pro
+              </a>
+            ) : null}
+            <SignOutButton />
+          </>
+        ) : (
+          <>
+            <a href="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+              Sign in
+            </a>
+            <a href="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              Get email alerts
+            </a>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+'@
+[System.IO.File]::WriteAllText("$PWD\app\site-nav.js", $siteNavContent, $utf8NoBom)
+Write-Host "  Created app\site-nav.js" -ForegroundColor Green
+
+# ============================================================
+# File 2: app/layout.js (OVERWRITE)
+# ============================================================
+$layoutContent = @'
+import './globals.css';
+import Providers from './providers';
+import SiteNav from './site-nav';
+
+export const metadata = {
+  title: 'CitationRadar',
+  description: 'Restaurant health inspection alerts for NYC and Toronto',
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          <SiteNav />
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+'@
+[System.IO.File]::WriteAllText("$PWD\app\layout.js", $layoutContent, $utf8NoBom)
+Write-Host "  Updated app\layout.js" -ForegroundColor Green
+
+# ============================================================
+# File 3: app/page.js (OVERWRITE -- final correct version,
+# with NO TopNav, since SiteNav in layout.js now handles this
+# globally instead)
+# ============================================================
+$pageContent = @'
 // CitationRadar -- Search & Filter UI (Session 7)
 //
 // City is the first, required choice -- not just another filter. This
@@ -195,3 +298,13 @@ export default async function Home({ searchParams }) {
     </div>
   );
 }
+'@
+[System.IO.File]::WriteAllText("$PWD\app\page.js", $pageContent, $utf8NoBom)
+Write-Host "  Updated app\page.js" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "All 3 files updated successfully." -ForegroundColor Cyan
+Write-Host "Next: review the changes, then commit and push:" -ForegroundColor Yellow
+Write-Host '  git add .'
+Write-Host '  git commit -m "Add site-wide navigation"'
+Write-Host '  git push'

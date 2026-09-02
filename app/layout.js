@@ -1,5 +1,6 @@
 import './globals.css';
 import Providers from './providers';
+import SiteNav from './site-nav';
 
 export const metadata = {
   title: 'CitationRadar',
@@ -10,7 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SiteNav />
+          {children}
+        </Providers>
       </body>
     </html>
   );
